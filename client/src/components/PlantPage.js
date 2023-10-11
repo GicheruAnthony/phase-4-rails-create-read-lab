@@ -1,18 +1,29 @@
-import { useEffect, useState } from "react";
-import NewPlantForm from "./NewPlantForm";
-import PlantList from "./PlantList";
-import Search from "./Search";
+import { useEffect, useState } from 'react';
+import NewPlantForm from './NewPlantForm';
+import PlantList from './PlantList';
+import Search from './Search';
 
 function PlantPage() {
   const [plants, setPlants] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // no need to use http://localhost:3000 here
-    fetch("/plants")
-      .then((r) => r.json())
+    fetch('/plants')
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
       .then((plantsArray) => {
         setPlants(plantsArray);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err);
+        setLoading(false);
       });
   }, []);
 
@@ -21,15 +32,21 @@ function PlantPage() {
     setPlants(updatedPlantsArray);
   }
 
-  const displayedPlants = plants.filter((plant) => {
-    return plant.name.toLowerCase().includes(searchTerm.toLowerCase());
-  });
+  const displayedPlants = plants.filter((plant) =>
+    plant.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <main>
       <NewPlantForm onAddPlant={handleAddPlant} />
       <Search searchTerm={searchTerm} onSearchChange={setSearchTerm} />
-      <PlantList plants={displayedPlants} />
+      {loading ? (
+        <p>Loading...</p>
+      ) : error ? (
+        <p>Error: {error.message}</p>
+      ) : (
+        <PlantList plants={displayedPlants} />
+      )}
     </main>
   );
 }
